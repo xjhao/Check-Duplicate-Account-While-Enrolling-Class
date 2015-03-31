@@ -1,0 +1,58 @@
+
+        <style type="text/css">
+          .download_img {
+              vertical-align: middle;
+              margin-left:22px;
+              height:12px;
+            }
+
+        </style>
+
+        <script type="text/javascript" src="/javascripts/save_folder_state.js"></script>
+
+        <script type="text/javascript">
+        <!--
+        function isDownloadedGWT(assignmentID, userName) {
+          json = localStorage.getItem('@org.assistments.gwt.student.tutor.service.state.offline.OffLineAssignments/0000');
+          if (json) {
+            users = JSON.parse(json);
+            if (users) {
+              assignments = users[userName];
+              if (assignments) {
+                fullAssignmentID = '@org.assistments.core.domain.Assignment/' + assignmentID
+                if (assignments[fullAssignmentID]) {
+                  // Disable the image link
+                  document.getElementById('img_link_' + assignmentID).removeAttribute('onclick');
+                  document.getElementById('img_link_' + assignmentID).removeAttribute('href');
+                  // Swap out the image from Download! to Complete
+                  document.getElementById('img' + assignmentID).src = "/images/tutor/downloadComplete.png";
+                  // Move the image over a bit, because it is smaller than the "Download!" image.
+                  document.getElementById('img' + assignmentID).style.height = "13px";
+                }
+              }
+          }
+        }
+       }
+        -->
+        </script>
+
+<div class="frame_content">
+  
+	<% if @new_student %>
+		<script>
+		  $j(function() {
+				var class_div = $j('#new_class_div');
+				var new_div = $j('#new_student_div');
+				new_div.append(class_div.contents());
+		  });
+		</script>
+		<div id="new_student_div" style="display:inline-block;"></div>
+	<% end %>
+	
+	<!--Send variables to _student_home_accordion.rhtml if the user already enrolled in this class-->
+	<% if @already_enrolled.nil? %>
+		<%= render :partial => "student_home_accordion" %>
+	<% else %>
+		<%= render :partial => "student_home_accordion", :locals => {:already_enrolled => @already_enrolled, :class_section_name => @class_section_name, :enrolled_login => @enrolled_login, :teacher_displayname => @teacher_displayname} %>
+	<% end %>
+</div>
