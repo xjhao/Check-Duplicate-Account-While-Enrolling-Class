@@ -1,0 +1,197 @@
+<%= stylesheet_link_tag "student/reaction_assignments.css" %>
+<% 
+#initialization
+disable_class_assignments = false
+disable_arrs_relearning = false
+disable_arrs_reassessment = false
+disable_placements = false
+disabled = 'ui-state-disabled'
+
+
+if (@arrs_enabled and @arrs_strict_mode) or @disable_everything
+	disable_class_assignments = true
+end 
+
+if @disable_everything
+	disable_arrs_relearning = true
+	disable_arrs_reassessment = true
+	disable_placements = true
+end
+
+if !@student_class.nil?
+	@hide_student_item_report ||= @student_class.hide_student_item_report? #grab the setting if it is not already defined.
+end
+
+%>
+
+
+<script>
+jQuery(document).ready( function() {
+    jQuery('#accordion').accordion({
+        collapsible:true,
+		active: false,
+		heightStyle: 'content',
+		header: 'h3',
+        beforeActivate: function(event, ui) {
+             // The accordion believes a panel is being opened
+            if (ui.newHeader[0]) {
+                var currHeader  = ui.newHeader;
+                var currContent = currHeader.next('.ui-accordion-content');
+             // The accordion believes a panel is being closed
+            } else {
+                var currHeader  = ui.oldHeader;
+                var currContent = currHeader.next('.ui-accordion-content');
+            }
+             // Since we've changed the default behavior, this detects the actual status
+            var isPanelSelected = currHeader.attr('aria-selected') == 'true';
+            
+             // Toggle the panel's header
+            currHeader.toggleClass('ui-corner-all',isPanelSelected).toggleClass('accordion-header-active ui-state-active ui-corner-top',!isPanelSelected).attr('aria-selected',((!isPanelSelected).toString()));
+            
+            // Toggle the panel's icon
+            currHeader.children('.ui-icon').toggleClass('ui-icon-triangle-1-e',isPanelSelected).toggleClass('ui-icon-triangle-1-s',!isPanelSelected);
+            
+             // Toggle the panel's content
+            currContent.toggleClass('accordion-content-active',!isPanelSelected)    
+            if (isPanelSelected) { currContent.slideUp(); }  else { currContent.slideDown(); }
+
+            return false; // Cancels the default action
+        }
+    });
+	
+	jQuery('#accordion h3:not(".ui-state-active")').click();
+	
+});
+
+jQuery(function() {
+  jQuery( ".setting_dialog" ).dialog({
+	autoOpen: false,
+    modal: true,
+    buttons: {
+      Ok: function() {
+        jQuery( this ).dialog( "close" );
+      }
+    }
+  });
+  
+  jQuery( ".already_enrolled_dialog" ).dialog({
+	width: 700,
+	autoOpen: true,
+    modal: true,
+    buttons: {
+      Ok: function() {
+        jQuery( this ).dialog( "close" );
+      }
+    }
+  });
+  
+});
+
+</script>
+<% if !params[:already_enrolled].nil? and params[:already_enrolled] == "true" %>
+
+<div class="already_enrolled_dialog" id="already_enrolled_warning" style="text-align:left">
+	<p>It appears that you are already enrolled in the <b><%= params[:class_section_name]%></b> section of this class.</p>  
+	<br>
+	<p>Your login is <b><%= params[:enrolled_login]%></b>. Please log out and then log in again using the correct username.</p>
+	<br>
+	<p>If you are still unable to log in, please ask your teacher, <b><%= params[:teacher_displayname]%></b>, to reset your password.</p>
+	<p>Or, if need be, contact us at assistments-help@wpi.edu.</p>
+</div>
+<%end%>
+
+
+<!-- DIALOG MESSAGE FOR PLACEMENTS ASSIGNMENTS
+-->
+<div class="setting_dialog" id="placements_remediation" style="display:none;"> PLACEments requires that you complete easier skills before attempting more challenging skills.
+  Therefore, ASSISTments displays the easier skills before revealing the more challenging skills.
+</div>
+
+<% if @arrs_enabled and @arrs_strict_mode %>
+	<center>
+	<div class='help_message' style="border-radius: 10px; display:inline-block;">
+		You are required to complete your Reassessment Tests and Relearning Assignments prior to accessing your other class assignments.
+	</div>
+	</center>
+<% end %>
+	
+<div id="accordion">
+
+<%  
+    ####################################################################################################################### 
+	################################################  ARRS Reassessment  ##################################################
+	####################################################################################################################### 
+%>	
+  <% if @arrs_enabled and @tests.size > 0 %>
+	  <h3 class="class_assignments <%= disabled if disable_arrs_reassessment%>">Reassessment Tests</h3>
+	  <div>
+			<% unless disable_arrs_reassessment %>
+				<%= render :partial => "arrs_reassessment_list" %>
+			<% end %>
+ 	  </div>
+  <% end %> 
+  
+<%  
+    ####################################################################################################################### 
+	#################################################  ARRS Relearning  ###################################################
+	####################################################################################################################### 
+%>
+  <% if @arrs_enabled and @relearning_records.size > 0 %>	
+	  <h3 class="class_assignments <%= disabled if disable_arrs_relearning%>">Relearning Assignments</h3>
+	  <div >
+			<% unless disable_arrs_relearning %>
+				<%= render :partial => "arrs_relearning_list" %>
+			<% end %>
+	  </div>
+  <% end %>  
+  
+<%  
+    ####################################################################################################################### 
+	##############################################  Placements Assignments  ###############################################
+	####################################################################################################################### 
+%>
+  <% if @placements_enabled and !@reaction_assignments.nil? and @reaction_assignments[:remediations].size > 0 %>
+	  <h3 class="class_assignments <%= disabled if disable_placements%>">
+		PLACEments Remediation Assignments   <br/>
+        <span style="font-size: 0.8em; font-weight: normal">
+        (<%=@reaction_assignments[:remediations].length + @reaction_assignments[:completed].to_i %> total,  <%= @reaction_assignments[:completed] %> completed, <%= @reaction_assignments[:remediationsRemaining] %> remaining)
+        </span>
+        <span style="font-size: 0.65em; font-weight: normal">
+          <%= link_to_function('why can\'t I see all of the assignments?' , "$j('#placements_remediation').dialog('open');event.stopPropagation();")%>
+        </span>
+      </h3>
+
+	  <div >
+			<% unless disable_placements %>
+				<%= render :partial => "reaction_assignment_list" %>
+			<% end %>
+	  </div>
+  <% end %>
+   
+<%  
+    ####################################################################################################################### 
+	################################################  Normal Assignments  #################################################
+	####################################################################################################################### 
+%>	  
+  <h3 class="class_assignments <%= disabled if disable_class_assignments %>">Class Assignments</h3>
+  <div >
+		<% unless disable_class_assignments %>
+			<%= render :partial => "class_assignment_list" %>
+		<% end %>
+  </div>
+
+  
+  
+  
+  
+</div>
+
+
+
+
+<script type="text/javascript">
+  function open_function_link(targetAssignment)
+  {
+    window.location.href = targetAssignment;
+  }
+</script>
